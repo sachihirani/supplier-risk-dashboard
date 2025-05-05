@@ -87,35 +87,42 @@ with tab2:
     col7, col8, col9 = st.columns(3)
     col7.metric("Duplicate ABNs", int(df_filtered["Duplicate_ABN"].sum()))
     col8.metric("Duplicate Invoices", int(df_filtered["Duplicate_Invoice"].sum()))
-    col9.metric("High Amount Invoices", int(df_filtered["High_Amount"].sum()))
+    col9.metric("High Amount Invoices > 30k", int(df_filtered["High_Amount"].sum()))
 
 # ---------------- Tab 3: To Pay Hub ----------------
 with tab3:
     st.header("To Pay Hub")
 
-    def classify_unpaid(row):
-        if row["Payment_Status"] != "Unpaid":
-            return None
-        days_diff = (row["Due_Date"] - pd.Timestamp.now()).days
-        if days_diff < 0:
-            return "Unpaid_LatePayNow"
-        elif days_diff == 0:
-            return "Unpaid_TodayPayNow"
-        elif days_diff <= 2:
-            return "Unpaid_HighPriority"
-        elif days_diff <= 7:
-            return "Unpaid_Priority"
-        return "Unpaid_Other"
+    unpaid_statuses = [
+        "Unpaid",
+        "Unpaid_HighPriority",
+        "Unpaid_LatePayNow",
+        "Unpaid_Priority",
+        "Unpaid_TodayPayNow"
+    ]
 
-    df_filtered["Unpaid_Category"] = df_filtered.apply(classify_unpaid, axis=1)
-    unpaid_df = df_filtered[df_filtered["Payment_Status"] == "Unpaid"]
-    unpaid_summary = unpaid_df["Unpaid_Category"].value_counts().reset_index()
+    # Filter to only the unpaid statuses you care about
+    unpaid_df = df_filtered[df_filtered["Payment_Status"].isin(unpaid_statuses)]
+
+    # Donut Chart
+    unpaid_summary = unpaid_df["Payment_Status"].value_counts().reset_index()
     unpaid_summary.columns = ["Unpaid Status", "Count"]
 
     if not unpaid_summary.empty:
-        st.plotly_chart(px.pie(unpaid_summary, names="Unpaid Status", values="Count", hole=0.4), use_container_width=True)
+        st.plotly_chart(
+            px.pie(unpaid_summary, names="Unpaid Status", values="Count", hole=0.4),
+            use_container_width=True
+        )
     else:
         st.warning("No unpaid invoice categories found.")
 
+    # Tile-style local filter for the table
     st.subheader("Unpaid Invoice Table")
-    st.dataframe(unpaid_df[["Invoice_ID", "Name", "Due_Date", "Invoice_Amount", "Unpaid_Category"]], use_container_width=True)
+    selected_unpaid_type = st.radio(
+        "Select Category",
+        unpaid_statuses,
+        horizontal=True
+    )
+
+    filtered_table = unpaid_df[unpaid_df["Payment_Status"] == selected_unpaid_type]
+    st.dataframe(filtered_table[["Invoice_ID", "Name", "Due_Date", "Invoice_Amount", "Payment_Status"]], use_container_width=True)
