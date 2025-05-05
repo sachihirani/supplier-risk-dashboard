@@ -71,6 +71,9 @@ if supplier_name:
     df_filtered = df_filtered[df_filtered["Name"].isin(supplier_name)]
 
 
+# --- Tabs ---
+tab1, tab2, tab3 = st.tabs(["Key Insights", "Risk Overview", "To Pay Hub"])
+
 # ---------------- Tab 1: Key Insights ----------------
 with tab1:
     st.title("Agri Cross Invoice Risk Dashboard")
