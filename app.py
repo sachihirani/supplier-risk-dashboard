@@ -79,16 +79,62 @@ with tab2:
     st.header("Risk Overview")
 
     if "Risk_Score" in df_filtered.columns and not df_filtered["Risk_Score"].dropna().empty:
-        risk_counts = df_filtered["Risk_Score"].value_counts().sort_index().reset_index()
-        risk_counts.columns = ["Risk Score", "Count"]
-        st.plotly_chart(px.bar(risk_counts, x="Risk Score", y="Count", title="Invoices by Risk Score"), use_container_width=True)
-    else:
-        st.warning("No risk score data available to display.")
+    # Only show Risk Scores 1, 2, 3
+    filtered_risks = df_filtered[df_filtered["Risk_Score"].isin([1, 2, 3])]
+    risk_counts = filtered_risks["Risk_Score"].value_counts().sort_index().reset_index()
+    risk_counts.columns = ["Risk Score", "Count"]
+
+    # Custom colours for bars
+    colour_map = {
+        1: "#FFD700",  # Yellow
+        2: "#FFA500",  # Orange
+        3: "#FF4500"   # Red
+    }
+    risk_counts["Colour"] = risk_counts["Risk Score"].map(colour_map)
+
+    fig = px.bar(
+        risk_counts,
+        x="Count",
+        y="Risk Score",
+        orientation="h",
+        title="Invoices by Risk Score (1–3 Only)",
+        color="Risk Score",
+        color_discrete_map=colour_map,
+        log_x=True
+    )
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.warning("No risk score data available to display.")
 
     col7, col8, col9 = st.columns(3)
     col7.metric("Duplicate ABNs", int(df_filtered["Duplicate_ABN"].sum()))
     col8.metric("Duplicate Invoices", int(df_filtered["Duplicate_Invoice"].sum()))
     col9.metric("High Amount Invoices > 30k", int(df_filtered["High_Amount"].sum()))
+
+    # ===== Invoices by Risk Score (1, 2, 3) =====
+    st.subheader("Invoices by Risk Level")
+
+    display_risk_labels = {
+        1: "🟨 Low Risk (Score 1)",
+        2: "🟧 Medium Risk (Score 2)",
+        3: "🟥 High Risk (Score 3)"
+    }
+    reverse_risk_lookup = {v: k for k, v in display_risk_labels.items()}
+
+    selected_risk_label = st.radio(
+        "Select Risk Category",
+        [display_risk_labels[k] for k in [1, 2, 3]],
+        horizontal=True
+    )
+
+    selected_risk_score = reverse_risk_lookup[selected_risk_label]
+    risk_filtered_df = df_filtered[df_filtered["Risk_Score"] == selected_risk_score]
+
+    st.dataframe(
+        risk_filtered_df[["Invoice_ID", "Name", "Invoice_Amount", "Due_Date", "Risk_Score"]],
+        use_container_width=True
+    )
+
 
 # ---------------- Tab 3: To Pay Hub ----------------
 with tab3:
