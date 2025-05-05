@@ -23,13 +23,17 @@ df = pd.read_csv("final_supplier_risk.csv", parse_dates=["Invoice_Date", "Due_Da
 df["Status"] = df["Status"].astype(str).str.strip().str.title()
 df["Payment_Status"] = df["Payment_Status"].astype(str).str.strip().str.title()
 
-# Clear filter logic using session_state
-if "clear_filters" not in st.session_state:
-    st.session_state.clear_filters = False
+# ---- SESSION-BASED CLEAR FILTER WORKAROUND ----
+if "clear_triggered" not in st.session_state:
+    st.session_state.clear_triggered = False
 
-if st.session_state.clear_filters:
-    st.session_state.clear()  # Reset all filters
-    st.experimental_rerun()
+if st.session_state.clear_triggered:
+    # Remove all keys except the trigger itself
+    for key in list(st.session_state.keys()):
+        if key != "clear_triggered":
+            del st.session_state[key]
+    st.session_state.clear_triggered = False  # Reset trigger
+
 
 # ---------- SIDEBAR FILTERS ----------
 st.sidebar.header("Filters")
@@ -69,7 +73,9 @@ invoice_date_range = st.sidebar.date_input(
 )
 
 if st.sidebar.button("Clear All Filters"):
-    st.session_state.clear_filters = True
+    st.session_state.clear_triggered = True
+    st.experimental_rerun()  # Now safe, because it'll rerun before widgets render
+
 
 
 # ---------- APPLY FILTERS ----------
