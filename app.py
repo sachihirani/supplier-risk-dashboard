@@ -23,25 +23,43 @@ df = pd.read_csv("final_supplier_risk.csv", parse_dates=["Invoice_Date", "Due_Da
 df["Status"] = df["Status"].astype(str).str.strip().str.title()
 df["Payment_Status"] = df["Payment_Status"].astype(str).str.strip().str.title()
 
-# --- Sidebar filters ---
+# ---------- SIDEBAR FILTERS ----------
 st.sidebar.header("Filters")
-status = st.sidebar.multiselect("Status", df["Status"].dropna().unique())
-supplier_type = st.sidebar.multiselect("Supplier Type", df["Supplier_Type"].dropna().unique())
-service_cat = st.sidebar.multiselect("Service Category", df["Service_Category"].dropna().unique())
-invoice_month = st.sidebar.multiselect("Invoice Month", df["Invoice_Date"].dt.month_name().unique())
-due_month = st.sidebar.multiselect("Due Month", df["Due_Date"].dt.month_name().unique())
 
+supplier_type = st.sidebar.multiselect(
+    "Supplier Type",
+    df["Supplier_Type"].dropna().unique()
+)
+
+service_cat = st.sidebar.multiselect(
+    "Service Category",
+    df["Service_Category"].dropna().unique()
+)
+
+invoice_month = st.sidebar.multiselect(
+    "Invoice Month",
+    df["Invoice_Date"].dt.month_name().unique()
+)
+
+supplier_name = st.sidebar.multiselect(
+    "Supplier Name",
+    df["Name"].dropna().unique()
+)
+
+# ---------- APPLY FILTERS ----------
 df_filtered = df.copy()
-if status:
-    df_filtered = df_filtered[df_filtered["Status"].isin(status)]
+
 if supplier_type:
     df_filtered = df_filtered[df_filtered["Supplier_Type"].isin(supplier_type)]
+
 if service_cat:
     df_filtered = df_filtered[df_filtered["Service_Category"].isin(service_cat)]
+
 if invoice_month:
     df_filtered = df_filtered[df_filtered["Invoice_Date"].dt.month_name().isin(invoice_month)]
-if due_month:
-    df_filtered = df_filtered[df_filtered["Due_Date"].dt.month_name().isin(due_month)]
+
+if supplier_name:
+    df_filtered = df_filtered[df_filtered["Name"].isin(supplier_name)]
 
 # --- Tabs ---
 tab1, tab2, tab3 = st.tabs(["Key Insights", "Risk Overview", "To Pay Hub"])
