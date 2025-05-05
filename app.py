@@ -23,58 +23,52 @@ df = pd.read_csv("final_supplier_risk.csv", parse_dates=["Invoice_Date", "Due_Da
 df["Status"] = df["Status"].astype(str).str.strip().str.title()
 df["Payment_Status"] = df["Payment_Status"].astype(str).str.strip().str.title()
 
-# ---- SESSION-BASED CLEAR FILTER WORKAROUND ----
+# ---------- Clear Filters Logic ----------
+filter_keys = ["supplier_type", "service_cat", "invoice_date_range", "supplier_name"]
+
 if "clear_triggered" not in st.session_state:
     st.session_state.clear_triggered = False
 
 if st.session_state.clear_triggered:
-    # Remove all keys except the trigger itself
-    for key in list(st.session_state.keys()):
-        if key != "clear_triggered":
+    for key in filter_keys:
+        if key in st.session_state:
             del st.session_state[key]
-    st.session_state.clear_triggered = False  # Reset trigger
+    st.session_state.clear_triggered = False
 
 
 # ---------- SIDEBAR FILTERS ----------
 st.sidebar.header("Filters")
 
-# Step 1: Supplier Type
 supplier_type = st.sidebar.multiselect(
     "Supplier Type",
-    sorted(df["Supplier_Type"].dropna().unique())
+    sorted(df["Supplier_Type"].dropna().unique()),
+    key="supplier_type"
 )
-
-# Step 2: Service Category (depends on supplier type)
-if supplier_type:
-    filtered_df = df[df["Supplier_Type"].isin(supplier_type)]
-else:
-    filtered_df = df.copy()
 
 service_cat = st.sidebar.multiselect(
     "Service Category",
-    sorted(filtered_df["Service_Category"].dropna().unique())
+    sorted(filtered_df["Service_Category"].dropna().unique()),
+    key="service_cat"
 )
-
-# Step 3: Supplier Name (depends on both type + service category)
-if service_cat:
-    filtered_df = filtered_df[filtered_df["Service_Category"].isin(service_cat)]
 
 supplier_name = st.sidebar.multiselect(
     "Supplier Name",
-    sorted(filtered_df["Name"].dropna().unique())
+    sorted(filtered_df["Name"].dropna().unique()),
+    key="supplier_name"
 )
 
-# Step 4: Invoice Date Range (replaces month filter)
 invoice_date_range = st.sidebar.date_input(
     "Invoice Date Range",
     value=(df["Invoice_Date"].min(), df["Invoice_Date"].max()),
     min_value=df["Invoice_Date"].min(),
-    max_value=df["Invoice_Date"].max()
+    max_value=df["Invoice_Date"].max(),
+    key="invoice_date_range"
 )
+
 
 if st.sidebar.button("Clear All Filters"):
     st.session_state.clear_triggered = True
-    st.experimental_rerun()  # Now safe, because it'll rerun before widgets render
+
 
 
 
