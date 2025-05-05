@@ -12,16 +12,17 @@ import pandas as pd
 import plotly.express as px
 from PIL import Image
 
-# --- Setup ---
+# --- Config ---
 st.set_page_config(page_title="Agri Cross Invoice Risk Dashboard", layout="wide")
 logo = Image.open("logo.png")
 st.sidebar.image(logo, use_container_width=True)
 
-# --- Load Data ---
+# --- Load & clean ---
 df = pd.read_csv("final_supplier_risk.csv", parse_dates=["Invoice_Date", "Due_Date", "Payment_Date"])
 df["Status"] = df["Status"].astype(str).str.strip().str.title()
+df["Payment_Status"] = df["Payment_Status"].astype(str).str.strip().str.title()
 
-# --- Filters ---
+# --- Sidebar filters ---
 st.sidebar.header("Filters")
 status = st.sidebar.multiselect("Status", df["Status"].dropna().unique())
 supplier_type = st.sidebar.multiselect("Supplier Type", df["Supplier_Type"].dropna().unique())
@@ -44,6 +45,7 @@ if due_month:
 # --- Tabs ---
 tab1, tab2, tab3 = st.tabs(["Key Insights", "Risk Overview", "To Pay Hub"])
 
+# ---------------- Tab 1: Key Insights ----------------
 with tab1:
     st.title("Agri Cross Invoice Risk Dashboard")
     col1, col2, col3, col4 = st.columns(4)
@@ -71,22 +73,28 @@ with tab1:
     top_freq = df_filtered.groupby(["Supplier_ID", "Name"]).size().nlargest(10).reset_index(name="Invoice Count")
     st.dataframe(top_freq)
 
+# ---------------- Tab 2: Risk Overview ----------------
 with tab2:
     st.header("Risk Overview")
-    risk_counts = df_filtered["Risk_Score"].value_counts().sort_index().reset_index()
-    risk_counts.columns = ["Risk_Score", "Count"]
-    st.plotly_chart(px.bar(risk_counts, x="Risk Score", y="Count", title="Invoices by Risk Score"), use_container_width=True)
+
+    if "Risk_Score" in df_filtered.columns and not df_filtered["Risk_Score"].dropna().empty:
+        risk_counts = df_filtered["Risk_Score"].value_counts().sort_index().reset_index()
+        risk_counts.columns = ["Risk Score", "Count"]
+        st.plotly_chart(px.bar(risk_counts, x="Risk Score", y="Count", title="Invoices by Risk Score"), use_container_width=True)
+    else:
+        st.warning("No risk score data available to display.")
 
     col7, col8, col9 = st.columns(3)
     col7.metric("Duplicate ABNs", int(df_filtered["Duplicate_ABN"].sum()))
     col8.metric("Duplicate Invoices", int(df_filtered["Duplicate_Invoice"].sum()))
     col9.metric("High Amount Invoices", int(df_filtered["High_Amount"].sum()))
 
+# ---------------- Tab 3: To Pay Hub ----------------
 with tab3:
     st.header("To Pay Hub")
 
     def classify_unpaid(row):
-        if row["Status"] != "Unpaid":
+        if row["Payment_Status"] != "Unpaid":
             return None
         days_diff = (row["Due_Date"] - pd.Timestamp.now()).days
         if days_diff < 0:
@@ -100,11 +108,14 @@ with tab3:
         return "Unpaid_Other"
 
     df_filtered["Unpaid_Category"] = df_filtered.apply(classify_unpaid, axis=1)
-    unpaid_df = df_filtered[df_filtered["Status"] == "Unpaid"]
+    unpaid_df = df_filtered[df_filtered["Payment_Status"] == "Unpaid"]
     unpaid_summary = unpaid_df["Unpaid_Category"].value_counts().reset_index()
     unpaid_summary.columns = ["Unpaid Status", "Count"]
 
-    st.plotly_chart(px.pie(unpaid_summary, names="Unpaid Status", values="Count", hole=0.4), use_container_width=True)
+    if not unpaid_summary.empty:
+        st.plotly_chart(px.pie(unpaid_summary, names="Unpaid Status", values="Count", hole=0.4), use_container_width=True)
+    else:
+        st.warning("No unpaid invoice categories found.")
 
     st.subheader("Unpaid Invoice Table")
     st.dataframe(unpaid_df[["Invoice_ID", "Name", "Due_Date", "Invoice_Amount", "Unpaid_Category"]], use_container_width=True)
