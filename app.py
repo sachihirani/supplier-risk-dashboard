@@ -26,49 +26,57 @@ df["Payment_Status"] = df["Payment_Status"].astype(str).str.strip().str.title()
 # ---------- SIDEBAR FILTERS ----------
 st.sidebar.header("Filters")
 
-# Step 1: Select Supplier Type
+# Step 1: Supplier Type
 supplier_type = st.sidebar.multiselect(
     "Supplier Type",
-    df["Supplier_Type"].dropna().unique()
+    sorted(df["Supplier_Type"].dropna().unique())
 )
 
-# Step 2: Service Category
+# Step 2: Service Category (depends on supplier type)
+if supplier_type:
+    filtered_df = df[df["Supplier_Type"].isin(supplier_type)]
+else:
+    filtered_df = df.copy()
+
 service_cat = st.sidebar.multiselect(
     "Service Category",
-    df["Service_Category"].dropna().unique()
+    sorted(filtered_df["Service_Category"].dropna().unique())
 )
 
-# Step 3: Invoice Month
-invoice_month = st.sidebar.multiselect(
-    "Invoice Month",
-    df["Invoice_Date"].dt.month_name().unique()
-)
-
-# Step 4: Dynamically filter supplier names based on selected type
-if supplier_type:
-    name_options = df[df["Supplier_Type"].isin(supplier_type)]["Name"].dropna().unique()
-else:
-    name_options = df["Name"].dropna().unique()
+# Step 3: Supplier Name (depends on both type + service category)
+if service_cat:
+    filtered_df = filtered_df[filtered_df["Service_Category"].isin(service_cat)]
 
 supplier_name = st.sidebar.multiselect(
     "Supplier Name",
-    sorted(name_options)
+    sorted(filtered_df["Name"].dropna().unique())
 )
+
+# Step 4: Invoice Date Range (replaces month filter)
+invoice_date_range = st.sidebar.date_input(
+    "Invoice Date Range",
+    value=(df["Invoice_Date"].min(), df["Invoice_Date"].max()),
+    min_value=df["Invoice_Date"].min(),
+    max_value=df["Invoice_Date"].max()
+)
+
 
 # ---------- APPLY FILTERS ----------
 df_filtered = df.copy()
 
 if supplier_type:
     df_filtered = df_filtered[df_filtered["Supplier_Type"].isin(supplier_type)]
-
 if service_cat:
     df_filtered = df_filtered[df_filtered["Service_Category"].isin(service_cat)]
-
-if invoice_month:
-    df_filtered = df_filtered[df_filtered["Invoice_Date"].dt.month_name().isin(invoice_month)]
-
 if supplier_name:
     df_filtered = df_filtered[df_filtered["Name"].isin(supplier_name)]
+if isinstance(invoice_date_range, tuple) and len(invoice_date_range) == 2:
+    start_date, end_date = invoice_date_range
+    df_filtered = df_filtered[
+        (df_filtered["Invoice_Date"] >= pd.to_datetime(start_date)) &
+        (df_filtered["Invoice_Date"] <= pd.to_datetime(end_date))
+    ]
+
 
 
 # --- Tabs ---
