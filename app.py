@@ -77,6 +77,9 @@ if isinstance(invoice_date_range, tuple) and len(invoice_date_range) == 2:
         (df_filtered["Invoice_Date"] <= pd.to_datetime(end_date))
     ]
 
+# ---------- Clear Filters Button ----------
+if st.sidebar.button("Clear All Filters"):
+    st.experimental_rerun()
 
 
 # --- Tabs ---
