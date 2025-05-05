@@ -80,6 +80,8 @@ if isinstance(invoice_date_range, tuple) and len(invoice_date_range) == 2:
 # ---------- Clear Filters Button ----------
 if st.sidebar.button("Clear All Filters"):
     st.experimental_rerun()
+    st.stop()  # Safely stop execution after rerun
+
 
 
 # --- Tabs ---
