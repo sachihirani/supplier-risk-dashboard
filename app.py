@@ -60,6 +60,11 @@ invoice_date_range = st.sidebar.date_input(
     max_value=df["Invoice_Date"].max()
 )
 
+# ---------- Clear Filters Button (placed early to rerun safely) ----------
+if st.sidebar.button("Clear All Filters"):
+    st.experimental_rerun()
+    st.stop()  # Prevent any further code from executing
+
 
 # ---------- APPLY FILTERS ----------
 df_filtered = df.copy()
@@ -76,12 +81,6 @@ if isinstance(invoice_date_range, tuple) and len(invoice_date_range) == 2:
         (df_filtered["Invoice_Date"] >= pd.to_datetime(start_date)) &
         (df_filtered["Invoice_Date"] <= pd.to_datetime(end_date))
     ]
-
-# ---------- Clear Filters Button ----------
-if st.sidebar.button("Clear All Filters"):
-    st.experimental_rerun()
-    st.stop()  # Safely stop execution after rerun
-
 
 
 # --- Tabs ---
