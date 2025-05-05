@@ -10,6 +10,7 @@ Original file is located at
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from datetime import datetime
 from PIL import Image
 
 # --- Config ---
@@ -93,6 +94,16 @@ with tab2:
 with tab3:
     st.header("To Pay Hub")
 
+    # Dynamically determine Payment_Status based on flags
+    unpaid_df = df_filtered.copy()
+    unpaid_df["Payment_Status_Derived"] = "Other"
+
+    unpaid_df.loc[unpaid_df["Unpaid_Flag"] == 1, "Payment_Status_Derived"] = "Unpaid"
+    unpaid_df.loc[unpaid_df["Unpaid_HighPriority_Flag"] == 1, "Payment_Status_Derived"] = "Unpaid_HighPriority"
+    unpaid_df.loc[unpaid_df["Unpaid_LatePayNow_Flag"] == 1, "Payment_Status_Derived"] = "Unpaid_LatePayNow"
+    unpaid_df.loc[unpaid_df["Unpaid_TodayPayNow_Flag"] == 1, "Payment_Status_Derived"] = "Unpaid_TodayPayNow"
+    unpaid_df.loc[unpaid_df["Unpaid_Priority_Flag"] == 1, "Payment_Status_Derived"] = "Unpaid_Priority"
+
     unpaid_statuses = [
         "Unpaid",
         "Unpaid_HighPriority",
@@ -101,11 +112,11 @@ with tab3:
         "Unpaid_TodayPayNow"
     ]
 
-    # Filter to only the unpaid statuses you care about
-    unpaid_df = df_filtered[df_filtered["Payment_Status"].isin(unpaid_statuses)]
+    unpaid_df = unpaid_df[unpaid_df["Payment_Status_Derived"].isin(unpaid_statuses)]
 
     # Donut Chart
-    unpaid_summary = unpaid_df["Payment_Status"].value_counts().reset_index()
+    st.subheader(f"Unpaid Invoice Categories as of {datetime.today().strftime('%d %b %Y')}")
+    unpaid_summary = unpaid_df["Payment_Status_Derived"].value_counts().reset_index()
     unpaid_summary.columns = ["Unpaid Status", "Count"]
 
     if not unpaid_summary.empty:
@@ -116,13 +127,32 @@ with tab3:
     else:
         st.warning("No unpaid invoice categories found.")
 
-    # Tile-style local filter for the table
+    # Table Filter
     st.subheader("Unpaid Invoice Table")
-    selected_unpaid_type = st.radio(
-        "Select Category",
-        unpaid_statuses,
-        horizontal=True
-    )
+    display_labels = {
+    "Unpaid_LatePayNow": "🔴 Overdue",
+    "Unpaid_TodayPayNow": "🔵 Due Today",
+    "Unpaid_HighPriority": "🟠 Due in 2 Days",
+    "Unpaid_Priority": "🟡 Due in 1 Week",
+    "Unpaid": "🟢 Due Soon"
+}
 
-    filtered_table = unpaid_df[unpaid_df["Payment_Status"] == selected_unpaid_type]
-    st.dataframe(filtered_table[["Invoice_ID", "Name", "Due_Date", "Invoice_Amount", "Payment_Status"]], use_container_width=True)
+reverse_lookup = {v: k for k, v in display_labels.items()}
+
+selected_label = st.radio(
+    "Select Category",
+    [display_labels[k] for k in [
+        "Unpaid_LatePayNow",
+        "Unpaid_TodayPayNow",
+        "Unpaid_HighPriority",
+        "Unpaid_Priority",
+        "Unpaid"
+    ]],
+    horizontal=True
+)
+
+selected_unpaid_type = reverse_lookup[selected_label]
+filtered_table = unpaid_df[unpaid_df["Payment_Status_Derived"] == selected_unpaid_type]
+
+
+    st.dataframe(filtered_table[["Invoice_ID", "Name", "Due_Date", "Invoice_Amount", "Payment_Status_Derived"]], use_container_width=True)
