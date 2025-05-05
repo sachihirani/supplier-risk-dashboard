@@ -150,6 +150,25 @@ with tab1:
 with tab2:
     st.header("Risk Overview")
 
+    # Risk Heatmap: Risk Score by Service Category and Supplier Type
+    st.subheader("Risk Heatmap")
+    heatmap_df = df_filtered.copy()
+    heatmap_pivot = heatmap_df.pivot_table(
+        index="Service_Category",
+        columns="Supplier_Type",
+        values="Risk_Score",
+        aggfunc="mean"
+    ).fillna(0)
+
+    fig_heatmap = px.imshow(
+        heatmap_pivot,
+        text_auto=True,
+        color_continuous_scale="Reds",
+        labels=dict(x="Supplier Type", y="Service Category", color="Avg Risk Score"),
+        title="Average Risk Score by Service Category and Supplier Type"
+    )
+    st.plotly_chart(fig_heatmap, use_container_width=True)
+
     # ---- Risk Score Bar Chart (Excluding 0) ----
     if "Risk_Score" in df_filtered.columns and not df_filtered["Risk_Score"].dropna().empty:
         filtered_risks = df_filtered[df_filtered["Risk_Score"].isin([1, 2, 3])]
