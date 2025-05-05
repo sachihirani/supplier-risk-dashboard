@@ -26,24 +26,33 @@ df["Payment_Status"] = df["Payment_Status"].astype(str).str.strip().str.title()
 # ---------- SIDEBAR FILTERS ----------
 st.sidebar.header("Filters")
 
+# Step 1: Select Supplier Type
 supplier_type = st.sidebar.multiselect(
     "Supplier Type",
     df["Supplier_Type"].dropna().unique()
 )
 
+# Step 2: Service Category
 service_cat = st.sidebar.multiselect(
     "Service Category",
     df["Service_Category"].dropna().unique()
 )
 
+# Step 3: Invoice Month
 invoice_month = st.sidebar.multiselect(
     "Invoice Month",
     df["Invoice_Date"].dt.month_name().unique()
 )
 
+# Step 4: Dynamically filter supplier names based on selected type
+if supplier_type:
+    name_options = df[df["Supplier_Type"].isin(supplier_type)]["Name"].dropna().unique()
+else:
+    name_options = df["Name"].dropna().unique()
+
 supplier_name = st.sidebar.multiselect(
     "Supplier Name",
-    sorted(df["Name"].dropna().unique())
+    sorted(name_options)
 )
 
 # ---------- APPLY FILTERS ----------
@@ -61,8 +70,6 @@ if invoice_month:
 if supplier_name:
     df_filtered = df_filtered[df_filtered["Name"].isin(supplier_name)]
 
-# --- Tabs ---
-tab1, tab2, tab3 = st.tabs(["Key Insights", "Risk Overview", "To Pay Hub"])
 
 # ---------------- Tab 1: Key Insights ----------------
 with tab1:
