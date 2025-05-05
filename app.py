@@ -64,17 +64,17 @@ with tab1:
     st.plotly_chart(px.pie(status_counts, names="Status", values="Count", hole=0.5), use_container_width=True)
 
     st.subheader("Top 10 Suppliers by Amount")
-    top_amt = df_filtered.groupby(["Supplier ID", "Supplier Name"])["Invoice_Amount"].sum().nlargest(10).reset_index()
+    top_amt = df_filtered.groupby(["Supplier_ID", "Name"])["Invoice_Amount"].sum().nlargest(10).reset_index()
     st.dataframe(top_amt)
 
     st.subheader("Top 10 Suppliers by Frequency")
-    top_freq = df_filtered.groupby(["Supplier ID", "Supplier Name"]).size().nlargest(10).reset_index(name="Invoice Count")
+    top_freq = df_filtered.groupby(["Supplier_ID", "Name"]).size().nlargest(10).reset_index(name="Invoice Count")
     st.dataframe(top_freq)
 
 with tab2:
     st.header("Risk Overview")
     risk_counts = df_filtered["Risk_Score"].value_counts().sort_index().reset_index()
-    risk_counts.columns = ["Risk Score", "Count"]
+    risk_counts.columns = ["Risk_Score", "Count"]
     st.plotly_chart(px.bar(risk_counts, x="Risk Score", y="Count", title="Invoices by Risk Score"), use_container_width=True)
 
     col7, col8, col9 = st.columns(3)
@@ -107,4 +107,4 @@ with tab3:
     st.plotly_chart(px.pie(unpaid_summary, names="Unpaid Status", values="Count", hole=0.4), use_container_width=True)
 
     st.subheader("Unpaid Invoice Table")
-    st.dataframe(unpaid_df[["Invoice_ID", "Supplier Name", "Due_Date", "Invoice_Amount", "Unpaid_Category"]], use_container_width=True)
+    st.dataframe(unpaid_df[["Invoice_ID", "Name", "Due_Date", "Invoice_Amount", "Unpaid_Category"]], use_container_width=True)
