@@ -15,7 +15,7 @@ from PIL import Image
 # ---------- SETTINGS ----------
 st.set_page_config(page_title="Agri Cross Invoice Risk Dashboard", layout="wide")
 logo = Image.open("logo.png")
-st.sidebar.image(logo, use_column_width=True)
+st.sidebar.image(logo, use_container_width=True)
 
 # ---------- LOAD DATA ----------
 df = pd.read_csv("final_supplier_risk.csv", parse_dates=["Invoice_Date", "Due_Date", "Payment_Date"])
