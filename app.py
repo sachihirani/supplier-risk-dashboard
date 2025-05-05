@@ -89,16 +89,19 @@ if invoice_date_range:
 # --- Tabs ---
 tab1, tab2, tab3, tab4 = st.tabs(["Key Insights", "Risk Overview", "To Pay Hub", "Supplier Profile"])
 
+
+
 # ---------------- Tab 1: Key Insights ----------------
 with tab1:
     st.title("Agri Cross Invoice Risk Dashboard")
+
+    # KPIs
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total Invoices", len(df_filtered))
     col2.metric("Total Invoice Amount", f"${df_filtered['Invoice_Amount'].sum():,.0f}")
     col3.metric("Paid On Time", df_filtered[df_filtered["Status"] == "On Time"].shape[0])
     col4.metric("Paid Late", df_filtered[df_filtered["Status"] == "Late"].shape[0])
 
-    # Additional KPIs
     col5, col6, col7 = st.columns(3)
     total_invoices = len(df_filtered)
     late_invoices = df_filtered[df_filtered["Status"] == "Late"].shape[0]
@@ -109,6 +112,29 @@ with tab1:
     col5.metric("% Paid Late", f"{(late_invoices / total_invoices * 100):.1f}%" if total_invoices else "0%")
     col6.metric("Avg Invoice Amount", f"${avg_invoice_amt:,.2f}")
     col7.metric("Avg Days Late", f"{avg_days_late:.1f}" if not pd.isna(avg_days_late) else "N/A")
+
+    # Line Chart - Monthly Invoice Totals
+    st.subheader("Invoice Amount Over Time")
+    monthly = df_filtered.copy()
+    monthly["Month"] = monthly["Invoice_Date"].dt.to_period("M").astype(str)
+    monthly_sum = monthly.groupby("Month")["Invoice_Amount"].sum().reset_index()
+    st.plotly_chart(px.line(monthly_sum, x="Month", y="Invoice_Amount", title="Monthly Invoice Totals"), use_container_width=True)
+
+    # Donut Chart - Invoice Status
+    st.subheader("Invoice Status Distribution")
+    status_counts = df_filtered["Status"].value_counts().reset_index()
+    status_counts.columns = ["Status", "Count"]
+    st.plotly_chart(px.pie(status_counts, names="Status", values="Count", hole=0.5), use_container_width=True)
+
+    # Top 10 Suppliers by Amount
+    st.subheader("Top 10 Suppliers by Amount")
+    top_amt = df_filtered.groupby(["Supplier_ID", "Name"])["Invoice_Amount"].sum().nlargest(10).reset_index()
+    st.dataframe(top_amt)
+
+    # Top 10 Suppliers by Frequency
+    st.subheader("Top 10 Suppliers by Frequency")
+    top_freq = df_filtered.groupby(["Supplier_ID", "Name"]).size().nlargest(10).reset_index(name="Invoice Count")
+    st.dataframe(top_freq)
 
 # ---------------- Tab 2: Risk Overview ----------------
 with tab2:
