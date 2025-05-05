@@ -43,7 +43,7 @@ invoice_month = st.sidebar.multiselect(
 
 supplier_name = st.sidebar.multiselect(
     "Supplier Name",
-    df["Name"].dropna().unique()
+    sorted(df["Name"].dropna().unique())
 )
 
 # ---------- APPLY FILTERS ----------
