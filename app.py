@@ -120,6 +120,15 @@ with tab1:
     monthly_sum = monthly.groupby("Month")["Invoice_Amount"].sum().reset_index()
     st.plotly_chart(px.line(monthly_sum, x="Month", y="Invoice_Amount", title="Monthly Invoice Totals"), use_container_width=True)
 
+    # Late Payment % Over Time
+    st.subheader("Late Payment % Over Time")
+    monthly_late = df_filtered.copy()
+    monthly_late["Month"] = monthly_late["Invoice_Date"].dt.to_period("M").astype(str)
+    monthly_late_grouped = monthly_late.groupby("Month")["Paid_Late_Flag"].mean().reset_index()
+    monthly_late_grouped["Late %"] = monthly_late_grouped["Paid_Late_Flag"] * 100
+    fig_late = px.line(monthly_late_grouped, x="Month", y="Late %", title="Late Payment Percentage Over Time")
+    st.plotly_chart(fig_late, use_container_width=True)
+
     # Donut Chart - Invoice Status
     st.subheader("Invoice Status Distribution")
     status_counts = df_filtered["Status"].value_counts().reset_index()
@@ -135,6 +144,7 @@ with tab1:
     st.subheader("Top 10 Suppliers by Frequency")
     top_freq = df_filtered.groupby(["Supplier_ID", "Name"]).size().nlargest(10).reset_index(name="Invoice Count")
     st.dataframe(top_freq)
+
 
 # ---------------- Tab 2: Risk Overview ----------------
 with tab2:
