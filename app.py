@@ -55,10 +55,9 @@ supplier_name = st.sidebar.multiselect(
 # Step 4: Invoice Date Range (replaces month filter)
 invoice_date_range = st.sidebar.date_input(
     "Invoice Date Range (optional)",
-    value=None,
-    min_value=df["Invoice_Date"].min(),
-    max_value=df["Invoice_Date"].max()
+    value=(df["Invoice_Date"].min(), df["Invoice_Date"].max())
 )
+
 
 # ---------- APPLY FILTERS ----------
 df_filtered = df.copy()
@@ -69,10 +68,10 @@ if service_cat:
     df_filtered = df_filtered[df_filtered["Service_Category"].isin(service_cat)]
 if supplier_name:
     df_filtered = df_filtered[df_filtered["Name"].isin(supplier_name)]
-# Apply date range filter only if selected
-if invoice_date_range:
-    if isinstance(invoice_date_range, tuple) and len(invoice_date_range) == 2:
-        start_date, end_date = invoice_date_range
+# Apply date range filter only if both start and end dates are selected
+if isinstance(invoice_date_range, tuple) and len(invoice_date_range) == 2:
+    start_date, end_date = invoice_date_range
+    if start_date is not None and end_date is not None:
         df_filtered = df_filtered[
             (df_filtered["Invoice_Date"] >= pd.to_datetime(start_date)) &
             (df_filtered["Invoice_Date"] <= pd.to_datetime(end_date))
