@@ -267,6 +267,18 @@ with tab4:
     if supplier_selected:
         supplier_df = df_filtered[df_filtered["Name"] == supplier_selected]
 
+        # Display Supplier Info in tiles
+        info_cols = st.columns(4)
+        info_cols[0].markdown(f"**Name:** {supplier_df['Name'].iloc[0]}")
+        info_cols[1].markdown(f"**ABN:** {supplier_df['ABN'].iloc[0]}")
+        info_cols[2].markdown(f"**Country:** {supplier_df['Country'].iloc[0]}")
+        info_cols[3].markdown(f"**Service Category:** {supplier_df['Service_Category'].iloc[0]}")
+
+        info_cols2 = st.columns(3)
+        info_cols2[0].markdown(f"**Supplier Type:** {supplier_df['Supplier_Type'].iloc[0]}")
+        info_cols2[1].markdown(f"**Terms (Days):** {supplier_df['Terms (Days)'].iloc[0]}")
+        info_cols2[2].markdown(f"**Contact:** {supplier_df['Contact_Name'].iloc[0]} ({supplier_df['Contact_Email'].iloc[0]})")
+
         st.subheader("Invoice Summary Stats")
         col1, col2, col3 = st.columns(3)
         col1.metric("Total Invoices", len(supplier_df))
