@@ -12,29 +12,26 @@ import pandas as pd
 import plotly.express as px
 from PIL import Image
 
-# ---------- SETTINGS ----------
+# --- Setup ---
 st.set_page_config(page_title="Agri Cross Invoice Risk Dashboard", layout="wide")
 logo = Image.open("logo.png")
 st.sidebar.image(logo, use_container_width=True)
 
-# ---------- LOAD AND CLEAN DATA ----------
-# Load data and clean up
+# --- Load Data ---
 df = pd.read_csv("final_supplier_risk.csv", parse_dates=["Invoice_Date", "Due_Date", "Payment_Date"])
 df["Status"] = df["Status"].astype(str).str.strip().str.title()
 
-
-# ---------- SIDEBAR FILTERS ----------
+# --- Filters ---
 st.sidebar.header("Filters")
-status = st.sidebar.multiselect("Payment Status", df["Payment_Status"].dropna().unique())
+status = st.sidebar.multiselect("Status", df["Status"].dropna().unique())
 supplier_type = st.sidebar.multiselect("Supplier Type", df["Supplier_Type"].dropna().unique())
 service_cat = st.sidebar.multiselect("Service Category", df["Service_Category"].dropna().unique())
 invoice_month = st.sidebar.multiselect("Invoice Month", df["Invoice_Date"].dt.month_name().unique())
 due_month = st.sidebar.multiselect("Due Month", df["Due_Date"].dt.month_name().unique())
 
-# ---------- APPLY FILTERS ----------
 df_filtered = df.copy()
 if status:
-    df_filtered = df_filtered[df_filtered["Payment_Status"].isin(status)]
+    df_filtered = df_filtered[df_filtered["Status"].isin(status)]
 if supplier_type:
     df_filtered = df_filtered[df_filtered["Supplier_Type"].isin(supplier_type)]
 if service_cat:
@@ -44,10 +41,9 @@ if invoice_month:
 if due_month:
     df_filtered = df_filtered[df_filtered["Due_Date"].dt.month_name().isin(due_month)]
 
-# ---------- TABS ----------
+# --- Tabs ---
 tab1, tab2, tab3 = st.tabs(["Key Insights", "Risk Overview", "To Pay Hub"])
 
-# ---------- TAB 1: KEY INSIGHTS ----------
 with tab1:
     st.title("Agri Cross Invoice Risk Dashboard")
     col1, col2, col3, col4 = st.columns(4)
@@ -56,35 +52,27 @@ with tab1:
     col3.metric("Paid On Time", df_filtered[df_filtered["Status"] == "On Time"].shape[0])
     col4.metric("Paid Late", df_filtered[df_filtered["Status"] == "Late"].shape[0])
 
-
-    st.subheader("📈 Invoice Amount Over Time")
+    st.subheader("Invoice Amount Over Time")
     monthly = df_filtered.copy()
     monthly["Month"] = monthly["Invoice_Date"].dt.to_period("M").astype(str)
     monthly_sum = monthly.groupby("Month")["Invoice_Amount"].sum().reset_index()
     st.plotly_chart(px.line(monthly_sum, x="Month", y="Invoice_Amount", title="Monthly Invoice Totals"), use_container_width=True)
 
-    st.subheader("Payment Status Distribution")
-    try:
-        status_counts = df_filtered["Payment_Status"].value_counts().reset_index()
-        st.plotly_chart(px.pie(status_counts, names='index', values='Payment_Status', hole=0.5), use_container_width=True)
-    except Exception as e:
-        st.warning("Not enough data to show payment status distribution.")
+    st.subheader("Invoice Status Distribution")
+    status_counts = df_filtered["Status"].value_counts().reset_index()
+    status_counts.columns = ["Status", "Count"]
+    st.plotly_chart(px.pie(status_counts, names="Status", values="Count", hole=0.5), use_container_width=True)
 
-    col5, col6 = st.columns(2)
-    top_amt = df_filtered.groupby(["Supplier_ID", "Supplier_Name"])["Invoice_Amount"].sum().nlargest(10).reset_index()
-    top_freq = df_filtered.groupby(["Supplier_ID", "Supplier_Name"]).size().nlargest(10).reset_index(name="Invoice_Count")
+    st.subheader("Top 10 Suppliers by Amount")
+    top_amt = df_filtered.groupby(["Supplier ID", "Supplier Name"])["Invoice_Amount"].sum().nlargest(10).reset_index()
+    st.dataframe(top_amt)
 
-    with col5:
-        st.subheader("Top 10 Suppliers by Amount")
-        st.plotly_chart(px.bar(top_amt, x="Supplier_Name", y="Invoice_Amount", hover_data=["Supplier_ID"]), use_container_width=True)
+    st.subheader("Top 10 Suppliers by Frequency")
+    top_freq = df_filtered.groupby(["Supplier ID", "Supplier Name"]).size().nlargest(10).reset_index(name="Invoice Count")
+    st.dataframe(top_freq)
 
-    with col6:
-        st.subheader("Top 10 Suppliers by Frequency")
-        st.plotly_chart(px.bar(top_freq, x="Supplier_Name", y="Invoice_Count", hover_data=["Supplier_ID"]), use_container_width=True)
-
-# ---------- TAB 2: RISK OVERVIEW ----------
 with tab2:
-    st.header("Risk Dashboard")
+    st.header("Risk Overview")
     risk_counts = df_filtered["Risk_Score"].value_counts().sort_index().reset_index()
     risk_counts.columns = ["Risk Score", "Count"]
     st.plotly_chart(px.bar(risk_counts, x="Risk Score", y="Count", title="Invoices by Risk Score"), use_container_width=True)
@@ -94,12 +82,11 @@ with tab2:
     col8.metric("Duplicate Invoices", int(df_filtered["Duplicate_Invoice"].sum()))
     col9.metric("High Amount Invoices", int(df_filtered["High_Amount"].sum()))
 
-# ---------- TAB 3: TO PAY HUB ----------
 with tab3:
-    st.header("Unpaid Invoice Hub")
+    st.header("To Pay Hub")
 
     def classify_unpaid(row):
-        if row["Payment_Status"] != "Unpaid":
+        if row["Status"] != "Unpaid":
             return None
         days_diff = (row["Due_Date"] - pd.Timestamp.now()).days
         if days_diff < 0:
@@ -113,14 +100,11 @@ with tab3:
         return "Unpaid_Other"
 
     df_filtered["Unpaid_Category"] = df_filtered.apply(classify_unpaid, axis=1)
-    unpaid_df = df_filtered[df_filtered["Payment_Status"] == "Unpaid"]
+    unpaid_df = df_filtered[df_filtered["Status"] == "Unpaid"]
     unpaid_summary = unpaid_df["Unpaid_Category"].value_counts().reset_index()
     unpaid_summary.columns = ["Unpaid Status", "Count"]
 
-    try:
-        st.plotly_chart(px.pie(unpaid_summary, names="Unpaid Status", values="Count", hole=0.4), use_container_width=True)
-    except:
-        st.warning("No unpaid invoices found or categories missing.")
+    st.plotly_chart(px.pie(unpaid_summary, names="Unpaid Status", values="Count", hole=0.4), use_container_width=True)
 
     st.subheader("Unpaid Invoice Table")
-    st.dataframe(unpaid_df[["Invoice_ID", "Supplier_Name", "Due_Date", "Invoice_Amount", "Unpaid_Category"]], use_container_width=True)
+    st.dataframe(unpaid_df[["Invoice_ID", "Supplier Name", "Due_Date", "Invoice_Amount", "Unpaid_Category"]], use_container_width=True)
