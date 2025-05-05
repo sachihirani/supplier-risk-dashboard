@@ -14,7 +14,7 @@ from datetime import datetime
 from PIL import Image
 
 # --- Config ---
-st.set_page_config(page_title="Agri Cross Invoice Risk Dashboard", layout="wide")
+st.set_page_config(page_title="Invoice Risk Dashboard", layout="wide")
 logo = Image.open("logo.png")
 st.sidebar.image(logo, use_container_width=True)
 
@@ -22,8 +22,6 @@ st.sidebar.image(logo, use_container_width=True)
 df = pd.read_csv("final_supplier_risk.csv", parse_dates=["Invoice_Date", "Due_Date", "Payment_Date"])
 df["Status"] = df["Status"].astype(str).str.strip().str.title()
 df["Payment_Status"] = df["Payment_Status"].astype(str).str.strip().str.title()
-
-
 
 # ---------- SIDEBAR FILTERS ----------
 st.sidebar.header("Filters")
@@ -56,15 +54,11 @@ supplier_name = st.sidebar.multiselect(
 
 # Step 4: Invoice Date Range (replaces month filter)
 invoice_date_range = st.sidebar.date_input(
-    "Invoice Date Range",
-    value=(df["Invoice_Date"].min(), df["Invoice_Date"].max()),
+    "Invoice Date Range (optional)",
+    value=None,
     min_value=df["Invoice_Date"].min(),
     max_value=df["Invoice_Date"].max()
 )
-
-if st.sidebar.button("Clear All Filters"):
-    st.session_state.clear_filters = True
-
 
 # ---------- APPLY FILTERS ----------
 df_filtered = df.copy()
@@ -75,12 +69,14 @@ if service_cat:
     df_filtered = df_filtered[df_filtered["Service_Category"].isin(service_cat)]
 if supplier_name:
     df_filtered = df_filtered[df_filtered["Name"].isin(supplier_name)]
-if isinstance(invoice_date_range, tuple) and len(invoice_date_range) == 2:
-    start_date, end_date = invoice_date_range
-    df_filtered = df_filtered[
-        (df_filtered["Invoice_Date"] >= pd.to_datetime(start_date)) &
-        (df_filtered["Invoice_Date"] <= pd.to_datetime(end_date))
-    ]
+# Apply date range filter only if selected
+if invoice_date_range:
+    if isinstance(invoice_date_range, tuple) and len(invoice_date_range) == 2:
+        start_date, end_date = invoice_date_range
+        df_filtered = df_filtered[
+            (df_filtered["Invoice_Date"] >= pd.to_datetime(start_date)) &
+            (df_filtered["Invoice_Date"] <= pd.to_datetime(end_date))
+        ]
 
 
 # --- Tabs ---
