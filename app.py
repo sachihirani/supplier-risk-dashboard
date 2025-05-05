@@ -23,6 +23,11 @@ df = pd.read_csv("final_supplier_risk.csv", parse_dates=["Invoice_Date", "Due_Da
 df["Status"] = df["Status"].astype(str).str.strip().str.title()
 df["Payment_Status"] = df["Payment_Status"].astype(str).str.strip().str.title()
 
+# ---------- Clear Filters Button  ----------
+if st.sidebar.button("Clear All Filters"):
+    st.experimental_rerun()
+    st.stop()  # Prevent any further code from executing
+
 # ---------- SIDEBAR FILTERS ----------
 st.sidebar.header("Filters")
 
@@ -60,10 +65,6 @@ invoice_date_range = st.sidebar.date_input(
     max_value=df["Invoice_Date"].max()
 )
 
-# ---------- Clear Filters Button (placed early to rerun safely) ----------
-if st.sidebar.button("Clear All Filters"):
-    st.experimental_rerun()
-    st.stop()  # Prevent any further code from executing
 
 
 # ---------- APPLY FILTERS ----------
