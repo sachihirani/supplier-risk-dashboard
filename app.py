@@ -17,10 +17,10 @@ st.set_page_config(page_title="Agri Cross Invoice Risk Dashboard", layout="wide"
 logo = Image.open("logo.png")
 st.sidebar.image(logo, use_container_width=True)
 
-# ---------- LOAD DATA ----------
+# ---------- LOAD AND CLEAN DATA ----------
+# Load data and clean up
 df = pd.read_csv("final_supplier_risk.csv", parse_dates=["Invoice_Date", "Due_Date", "Payment_Date"])
-# Clean payment status values
-df["Payment_Status"] = df["Payment_Status"].str.strip().str.title()
+df["Status"] = df["Status"].astype(str).str.strip().str.title()
 
 
 # ---------- SIDEBAR FILTERS ----------
@@ -53,8 +53,9 @@ with tab1:
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("Total Invoices", len(df_filtered))
     col2.metric("Total Invoice Amount", f"${df_filtered['Invoice_Amount'].sum():,.0f}")
-    col3.metric("Paid On Time", df_filtered[df_filtered["Payment_Status"] == "On Time"].shape[0])
-    col4.metric("Paid Late", df_filtered[df_filtered["Payment_Status"] == "Late"].shape[0])
+    col3.metric("Paid On Time", df_filtered[df_filtered["Status"] == "On Time"].shape[0])
+    col4.metric("Paid Late", df_filtered[df_filtered["Status"] == "Late"].shape[0])
+
 
     st.subheader("📈 Invoice Amount Over Time")
     monthly = df_filtered.copy()
