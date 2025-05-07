@@ -23,6 +23,13 @@ df = pd.read_csv("final_supplier_risk.csv", parse_dates=["Invoice_Date", "Due_Da
 df["Status"] = df["Status"].astype(str).str.strip().str.title()
 df["Payment_Status"] = df["Payment_Status"].astype(str).str.strip().str.title()
 
+# Ensure Due_Date is datetime
+df["Due_Date"] = pd.to_datetime(df["Due_Date"])
+
+# Create today's flag
+df["Unpaid_TodayPayNow_Flag"] = df["Due_Date"].dt.date == datetime.today().date()
+
+
 # ---------- SIDEBAR FILTERS ----------
 st.sidebar.header("Filters")
 
@@ -68,6 +75,7 @@ else:
 
 # ---------- APPLY FILTERS ----------
 df_filtered = df.copy()
+df_filtered["Unpaid_TodayPayNow_Flag"] = df["Unpaid_TodayPayNow_Flag"]
 
 if supplier_type:
     df_filtered = df_filtered[df_filtered["Supplier_Type"].isin(supplier_type)]
@@ -127,7 +135,7 @@ with tab1:
     monthly_late["Month"] = monthly_late["Invoice_Date"].dt.to_period("M").astype(str)
     monthly_late_grouped = monthly_late.groupby("Month")["Paid_Late_Flag"].mean().reset_index()
     monthly_late_grouped["Late %"] = monthly_late_grouped["Paid_Late_Flag"] * 100
-    fig_late = px.line(monthly_late_grouped, x="Month", y="Late %", title="Late Payment Percentage Over Time")
+    fig_late = px.line(monthly_late_grouped, x="Month", y="Late %")
     st.plotly_chart(fig_late, use_container_width=True)
 
     # Donut Chart - Invoice Status
@@ -175,7 +183,6 @@ with tab2:
         y="Service_Category",
         z="Risk_Score",
         color_continuous_scale="Reds",
-        title="Avg Risk Score by Category & Type",
         height=500,
         width=800,
     )
@@ -211,7 +218,6 @@ with tab2:
             x="Count",
             y="Risk Score",
             orientation="h",
-            title="Invoices by Risk Score (1–3 Only)",
             color="Risk Score",
             color_discrete_map=colour_map,
             log_x=True
@@ -272,7 +278,7 @@ with tab3:
     unpaid_df = unpaid_df[unpaid_df["Payment_Status_Derived"].isin(unpaid_statuses)]
 
     # Donut Chart
-    st.markdown(f"""<div style="background-color:#e6f2ff; padding:10px; border:1px solid #1f77b4; border-radius:5px; margin-bottom:10px;"><strong>{"Unpaid Invoice Categories as of {datetime.today().strftime('%d %b %Y')}"}</strong></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div style="..."><strong>Unpaid Invoice Categories as of {datetime.today().strftime('%d %b %Y')}</strong></div>""", unsafe_allow_html=True)
     unpaid_summary = unpaid_df["Payment_Status_Derived"].value_counts().reset_index()
     unpaid_summary.columns = ["Unpaid Status", "Count"]
 
@@ -339,11 +345,11 @@ with tab4:
         payment_perf["Late %"] = payment_perf["Paid_Late_Flag"] * 100
 
         import plotly.express as px
-        fig1 = px.line(payment_perf, x="Month", y="Late %", title="Late Payment % Over Time")
+        fig1 = px.line(payment_perf, x="Month", y="Late %")
         st.plotly_chart(fig1, use_container_width=True)
 
         st.markdown(f"""<div style="background-color:#e6f2ff; padding:10px; border:1px solid #1f77b4; border-radius:5px; margin-bottom:10px;"><strong>{"Risk Score Distribution"}</strong></div>""", unsafe_allow_html=True)
         risk_dist = supplier_df["Risk_Score"].value_counts().sort_index().reset_index()
         risk_dist.columns = ["Risk Score", "Count"]
-        fig2 = px.bar(risk_dist, x="Risk Score", y="Count", title="Risk Score Distribution")
+        fig2 = px.bar(risk_dist, x="Risk Score", y="Count")
         st.plotly_chart(fig2, use_container_width=True)
