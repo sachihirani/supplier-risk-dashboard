@@ -26,8 +26,15 @@ df["Payment_Status"] = df["Payment_Status"].astype(str).str.strip().str.title()
 # Ensure Due_Date is datetime
 df["Due_Date"] = pd.to_datetime(df["Due_Date"])
 
-# Create today's flag
-df["Unpaid_TodayPayNow_Flag"] = df["Due_Date"].dt.date == datetime.today().date()
+# Define today's date
+today = datetime.today().date()
+
+# Create dynamic flags
+df["Unpaid_LatePayNow_Flag"] = df["Due_Date"].dt.date < today
+df["Unpaid_TodayPayNow_Flag"] = df["Due_Date"].dt.date == today
+df["Unpaid_HighPriority_Flag"] = df["Due_Date"].dt.date == today + timedelta(days=2)
+df["Unpaid_Priority_Flag"] = df["Due_Date"].dt.date == today + timedelta(days=7)
+df["Unpaid_Flag"] = df["Due_Date"].dt.date > today + timedelta(days=7)
 
 
 # ---------- SIDEBAR FILTERS ----------
@@ -75,7 +82,14 @@ else:
 
 # ---------- APPLY FILTERS ----------
 df_filtered = df.copy()
-df_filtered["Unpaid_TodayPayNow_Flag"] = df["Unpaid_TodayPayNow_Flag"]
+for col in [
+    "Unpaid_LatePayNow_Flag",
+    "Unpaid_TodayPayNow_Flag",
+    "Unpaid_HighPriority_Flag",
+    "Unpaid_Priority_Flag",
+    "Unpaid_Flag"
+]:
+    df_filtered[col] = df[col]
 
 if supplier_type:
     df_filtered = df_filtered[df_filtered["Supplier_Type"].isin(supplier_type)]
