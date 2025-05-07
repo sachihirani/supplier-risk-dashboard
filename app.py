@@ -115,7 +115,7 @@ with tab1:
     col7.metric("Avg Days Late", f"{avg_days_late:.1f}" if not pd.isna(avg_days_late) else "N/A")
 
     # Line Chart - Monthly Invoice Totals
-    st.subheader("Invoice Amount Over Time")
+    st.markdown(f"""<div style="background-color:#e6f2ff; padding:10px; border:1px solid #1f77b4; border-radius:5px; margin-bottom:10px;"><strong>{"Invoice Amount Over Time"}</strong></div>""", unsafe_allow_html=True)
     monthly = df_filtered.copy()
     monthly["Month"] = monthly["Invoice_Date"].dt.to_period("M").astype(str)
     monthly_sum = monthly.groupby("Month")["Invoice_Amount"].sum().reset_index()
