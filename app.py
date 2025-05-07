@@ -292,7 +292,7 @@ with tab3:
     unpaid_df = unpaid_df[unpaid_df["Payment_Status_Derived"].isin(unpaid_statuses)]
 
     # Donut Chart
-    st.markdown(f"""<div style="..."><strong>Unpaid Invoice Categories as of {datetime.today().strftime('%d %b %Y')}</strong></div>""", unsafe_allow_html=True)
+    st.markdown(f"""<div style="background-color:#e6f2ff; padding:10px; border:1px solid #1f77b4; border-radius:5px; margin-bottom:10px;"><strong>Unpaid Invoice Categories as of {datetime.today().strftime('%d %b %Y')}</strong></div>""", unsafe_allow_html=True)
     unpaid_summary = unpaid_df["Payment_Status_Derived"].value_counts().reset_index()
     unpaid_summary.columns = ["Unpaid Status", "Count"]
 
