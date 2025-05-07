@@ -119,7 +119,7 @@ with tab1:
     monthly = df_filtered.copy()
     monthly["Month"] = monthly["Invoice_Date"].dt.to_period("M").astype(str)
     monthly_sum = monthly.groupby("Month")["Invoice_Amount"].sum().reset_index()
-    st.plotly_chart(px.line(monthly_sum, x="Month", y="Invoice_Amount", title="Monthly Invoice Totals"), use_container_width=True)
+    st.plotly_chart(px.line(monthly_sum, x="Month", y="Invoice_Amount"), use_container_width=True)
 
     # Late Payment % Over Time
     st.subheader("Late Payment % Over Time")
