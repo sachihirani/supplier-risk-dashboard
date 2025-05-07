@@ -94,7 +94,7 @@ tab1, tab2, tab3, tab4 = st.tabs(["Key Insights", "Risk Overview", "To Pay Hub",
 
 # ---------------- Tab 1: Key Insights ----------------
 with tab1:
-    st.title("Agri Cross Invoice Risk Dashboard")
+    st.header("Key Insights")
 
     # KPIs
     col1, col2, col3, col4 = st.columns(4)
