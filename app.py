@@ -119,10 +119,10 @@ with tab1:
     monthly = df_filtered.copy()
     monthly["Month"] = monthly["Invoice_Date"].dt.to_period("M").astype(str)
     monthly_sum = monthly.groupby("Month")["Invoice_Amount"].sum().reset_index()
-    st.plotly_chart(px.line(monthly_sum, x="Month", y="Invoice_Amount"), use_container_width=True)
+    st.plotly_chart(px.line(monthly_sum, x="Month", y="Invoice_Amount", title="Monthly Invoice Totals"), use_container_width=True)
 
     # Late Payment % Over Time
-    st.subheader("Late Payment % Over Time")
+    st.markdown(f"""<div style="background-color:#e6f2ff; padding:10px; border:1px solid #1f77b4; border-radius:5px; margin-bottom:10px;"><strong>{"Late Payment % Over Time"}</strong></div>""", unsafe_allow_html=True)
     monthly_late = df_filtered.copy()
     monthly_late["Month"] = monthly_late["Invoice_Date"].dt.to_period("M").astype(str)
     monthly_late_grouped = monthly_late.groupby("Month")["Paid_Late_Flag"].mean().reset_index()
@@ -131,18 +131,18 @@ with tab1:
     st.plotly_chart(fig_late, use_container_width=True)
 
     # Donut Chart - Invoice Status
-    st.subheader("Invoice Status Distribution")
+    st.markdown(f"""<div style="background-color:#e6f2ff; padding:10px; border:1px solid #1f77b4; border-radius:5px; margin-bottom:10px;"><strong>{"Invoice Status Distribution"}</strong></div>""", unsafe_allow_html=True)
     status_counts = df_filtered["Status"].value_counts().reset_index()
     status_counts.columns = ["Status", "Count"]
     st.plotly_chart(px.pie(status_counts, names="Status", values="Count", hole=0.5), use_container_width=True)
 
     # Top 10 Suppliers by Amount
-    st.subheader("Top 10 Suppliers by Amount")
+    st.markdown(f"""<div style="background-color:#e6f2ff; padding:10px; border:1px solid #1f77b4; border-radius:5px; margin-bottom:10px;"><strong>{"Top 10 Suppliers by Amount"}</strong></div>""", unsafe_allow_html=True)
     top_amt = df_filtered.groupby(["Supplier_ID", "Name"])["Invoice_Amount"].sum().nlargest(10).reset_index()
     st.dataframe(top_amt)
 
     # Top 10 Suppliers by Frequency
-    st.subheader("Top 10 Suppliers by Frequency")
+    st.markdown(f"""<div style="background-color:#e6f2ff; padding:10px; border:1px solid #1f77b4; border-radius:5px; margin-bottom:10px;"><strong>{"Top 10 Suppliers by Frequency of Invoices"}</strong></div>""", unsafe_allow_html=True)
     top_freq = df_filtered.groupby(["Supplier_ID", "Name"]).size().nlargest(10).reset_index(name="Invoice Count")
     st.dataframe(top_freq)
 
@@ -151,8 +151,14 @@ with tab1:
 with tab2:
     st.header("Risk Overview")
 
+    # ---- Risk KPI Cards ----
+    col7, col8, col9 = st.columns(3)
+    col7.metric("Duplicate ABNs", int(df_filtered["Duplicate_ABN"].sum()))
+    col8.metric("Duplicate Invoices", int(df_filtered["Duplicate_Invoice"].sum()))
+    col9.metric("High Amount Invoices > 30k", int(df_filtered["High_Amount"].sum()))
+
     # ----- Risk Heatmap -----
-    st.subheader("Risk Heatmap")
+    st.markdown(f"""<div style="background-color:#e6f2ff; padding:10px; border:1px solid #1f77b4; border-radius:5px; margin-bottom:10px;"><strong>{"Risk Heatmap"}</strong></div>""", unsafe_allow_html=True)
     st.caption("Average Risk Score by Service Category and Supplier Type")
 
     heatmap_data = df_filtered.copy()
@@ -185,6 +191,9 @@ with tab2:
     st.plotly_chart(fig_heatmap, use_container_width=False)
 
     # ---- Risk Score Bar Chart (Excluding 0) ----
+
+    st.markdown(f"""<div style="background-color:#e6f2ff; padding:10px; border:1px solid #1f77b4; border-radius:5px; margin-bottom:10px;"><strong>{"Invoices by Risk Score (1-3 Only)"}</strong></div>""", unsafe_allow_html=True)
+
     if "Risk_Score" in df_filtered.columns and not df_filtered["Risk_Score"].dropna().empty:
         filtered_risks = df_filtered[df_filtered["Risk_Score"].isin([1, 2, 3])]
         risk_counts = filtered_risks["Risk_Score"].value_counts().sort_index().reset_index()
@@ -211,14 +220,8 @@ with tab2:
     else:
         st.warning("No risk score data available to display.")
 
-    # ---- Risk KPI Cards ----
-    col7, col8, col9 = st.columns(3)
-    col7.metric("Duplicate ABNs", int(df_filtered["Duplicate_ABN"].sum()))
-    col8.metric("Duplicate Invoices", int(df_filtered["Duplicate_Invoice"].sum()))
-    col9.metric("High Amount Invoices > 30k", int(df_filtered["High_Amount"].sum()))
-
     # ---- Risk Score Filtered Invoice Table ----
-    st.subheader("Invoices by Risk Level")
+    st.markdown(f"""<div style="background-color:#e6f2ff; padding:10px; border:1px solid #1f77b4; border-radius:5px; margin-bottom:10px;"><strong>{"List of Invoices with Risk"}</strong></div>""", unsafe_allow_html=True)
 
     display_risk_labels = {
         1: "🟨 Low Risk (Score 1)",
@@ -269,7 +272,7 @@ with tab3:
     unpaid_df = unpaid_df[unpaid_df["Payment_Status_Derived"].isin(unpaid_statuses)]
 
     # Donut Chart
-    st.subheader(f"Unpaid Invoice Categories as of {datetime.today().strftime('%d %b %Y')}")
+    st.markdown(f"""<div style="background-color:#e6f2ff; padding:10px; border:1px solid #1f77b4; border-radius:5px; margin-bottom:10px;"><strong>{"Unpaid Invoice Categories as of {datetime.today().strftime('%d %b %Y')}"}</strong></div>""", unsafe_allow_html=True)
     unpaid_summary = unpaid_df["Payment_Status_Derived"].value_counts().reset_index()
     unpaid_summary.columns = ["Unpaid Status", "Count"]
 
@@ -291,7 +294,7 @@ with tab3:
     }
     reverse_lookup = {v: k for k, v in display_labels.items()}
 
-    st.subheader("Unpaid Invoice Table")
+    st.markdown(f"""<div style="background-color:#e6f2ff; padding:10px; border:1px solid #1f77b4; border-radius:5px; margin-bottom:10px;"><strong>{"List of Invoices by Status"}</strong></div>""", unsafe_allow_html=True)
     selected_label = st.radio(
         "Select Category",
         [display_labels[k] for k in unpaid_statuses],
@@ -323,13 +326,13 @@ with tab4:
         info_cols2[1].markdown(f"**Terms (Days):** {supplier_df['Terms (Days)'].iloc[0]}")
         info_cols2[2].markdown(f"**Contact:** {supplier_df['Contact_Name'].iloc[0]} ({supplier_df['Contact_Email'].iloc[0]})")
 
-        st.subheader("Invoice Summary Stats")
+        st.markdown(f"""<div style="background-color:#e6f2ff; padding:10px; border:1px solid #1f77b4; border-radius:5px; margin-bottom:10px;"><strong>{"Invoice Summary Stats"}</strong></div>""", unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
         col1.metric("Total Invoices", len(supplier_df))
         col2.metric("Total Amount", f"${supplier_df['Invoice_Amount'].sum():,.0f}")
         col3.metric("Avg Invoice Amount", f"${supplier_df['Invoice_Amount'].mean():,.2f}")
 
-        st.subheader("Payment Performance Over Time")
+        st.markdown(f"""<div style="background-color:#e6f2ff; padding:10px; border:1px solid #1f77b4; border-radius:5px; margin-bottom:10px;"><strong>{"Payment Performance Over Time"}</strong></div>""", unsafe_allow_html=True)
         monthly = supplier_df.copy()
         monthly["Month"] = monthly["Invoice_Date"].dt.to_period("M").astype(str)
         payment_perf = monthly.groupby("Month")["Paid_Late_Flag"].mean().reset_index()
@@ -339,7 +342,7 @@ with tab4:
         fig1 = px.line(payment_perf, x="Month", y="Late %", title="Late Payment % Over Time")
         st.plotly_chart(fig1, use_container_width=True)
 
-        st.subheader("Risk Score Distribution")
+        st.markdown(f"""<div style="background-color:#e6f2ff; padding:10px; border:1px solid #1f77b4; border-radius:5px; margin-bottom:10px;"><strong>{"Risk Score Distribution"}</strong></div>""", unsafe_allow_html=True)
         risk_dist = supplier_df["Risk_Score"].value_counts().sort_index().reset_index()
         risk_dist.columns = ["Risk Score", "Count"]
         fig2 = px.bar(risk_dist, x="Risk Score", y="Count", title="Risk Score Distribution")
