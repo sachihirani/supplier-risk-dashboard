@@ -87,7 +87,7 @@ if invoice_date_range:
 
 
 # --- Tabs ---
-st.markdown("""<h1 style="text-align:center; color:#1f77b4;">Agri Cross Invoice Dashboard</h1>""", unsafe_allow_html=True)
+st.markdown("""<h1 style="text-align:left; color:#1f77b4;">Agri Cross Invoice Dashboard</h1>""", unsafe_allow_html=True)
 
 tab1, tab2, tab3, tab4 = st.tabs(["Key Insights", "Risk Overview", "To Pay Hub", "Supplier Profile"])
 
